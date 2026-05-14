@@ -10,6 +10,7 @@ from sc2.player import Bot
 from bot_loader import GameStarter, BotDefinitions
 from version import update_version_txt
 
+from sunsetorpheus.sunsetorpheus import SunsetOrpheus, CHOSEN_RACE
 
 def add_definitions(definitions: BotDefinitions):
     definitions.add_bot(
@@ -19,8 +20,10 @@ def add_definitions(definitions: BotDefinitions):
         "terranbot", lambda params: Bot(Race.Terran, TerranBot()), None
     )
     definitions.add_bot(
-        "zergbot", lambda params: Bot(Race.Zerg, ZergBot()),
-        None
+        "zergbot", lambda params: Bot(Race.Zerg, ZergBot()), None
+    )
+    definitions.add_bot(
+        "sunsetorpheus", lambda params: Bot(CHOSEN_RACE, SunsetOrpheus()), None
     )
 
 def main():
