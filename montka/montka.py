@@ -3,6 +3,7 @@ from sc2.data import Race
 from sharpy.knowledges import KnowledgeBot
 from sharpy.plans import BuildOrder
 
+# Race is fixed at import time so the same race is used across all bot instances in a game session.
 CHOSEN_RACE = random.choice([Race.Terran, Race.Zerg, Race.Protoss])
 
 class Montka(KnowledgeBot):
@@ -11,6 +12,7 @@ class Montka(KnowledgeBot):
         self.race = CHOSEN_RACE
 
     async def create_plan(self) -> BuildOrder:
+        # Delegate to the race-specific plan, passing enemy race for matchup-aware build selection.
         if self.knowledge.my_race == Race.Terran:
             from montka.terran.plan import terran_plan
             return terran_plan(self.knowledge.enemy_race)
@@ -22,5 +24,6 @@ class Montka(KnowledgeBot):
             return protoss_plan(self.knowledge.enemy_race)
 
 def run():
+    # Entry point for ladder: wraps Montka in a sc2 Bot player object.
     from sc2.player import Bot
     return Bot(CHOSEN_RACE, Montka())
