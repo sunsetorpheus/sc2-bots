@@ -43,8 +43,8 @@ zerg_zip = LadderZip(
     "ZergSharpyExample", "Zerg", [("zergbot", None), (os.path.join("zergbot", "run.py"), "run.py")], common
 )
 
-sunsetorpheus_zip = LadderZip(
-    "SunsetOrpheus", "Random", [("sunsetorpheus", None), (os.path.join("sunsetorpheus", "run.py"), "run.py")], common
+montka_zip = LadderZip(
+    "Mon'tka", "Random", [("montka", None), (os.path.join("montka", "run.py"), "run.py")], common
 )
 
 
@@ -52,7 +52,7 @@ zip_types = {
     "protoss": protoss_zip,
     "terran": terran_zip,
     "zerg": zerg_zip,
-    "sunsetorpheus": sunsetorpheus_zip,
+    "montka": montka_zip,
     # All
     "all": None,
 }

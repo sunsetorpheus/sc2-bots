@@ -2,7 +2,7 @@ import random
 from sc2.data import Race
 from sharpy.plans import BuildOrder
 
-from sunsetorpheus.zerg.builds import BUILDS
+from montka.zerg.builds import BUILDS
 
 
 def zerg_plan(enemy_race: Race = None) -> BuildOrder:

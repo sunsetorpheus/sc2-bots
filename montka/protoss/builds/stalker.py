@@ -6,8 +6,8 @@ from sharpy.plans.acts import *
 from sharpy.plans.acts.protoss import *
 from sharpy.plans.require import *
 
-from sunsetorpheus.protoss.build import Build
-from sunsetorpheus.protoss.common import protoss_tactics
+from montka.protoss.build import Build
+from montka.protoss.common import protoss_tactics
 
 
 def _plan() -> BuildOrder:

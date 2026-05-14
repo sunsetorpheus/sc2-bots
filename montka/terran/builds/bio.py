@@ -7,8 +7,8 @@ from sharpy.plans.acts.terran import *
 from sharpy.plans.require import *
 from sharpy.plans.tactics.terran import *
 
-from sunsetorpheus.terran.build import Build
-from sunsetorpheus.terran.common import terran_scv, terran_tactics
+from montka.terran.build import Build
+from montka.terran.common import terran_scv, terran_tactics
 
 
 def _plan() -> BuildOrder:

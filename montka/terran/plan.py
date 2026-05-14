@@ -2,7 +2,7 @@ import random
 from sc2.data import Race
 from sharpy.plans import BuildOrder
 
-from sunsetorpheus.terran.builds import BUILDS
+from montka.terran.builds import BUILDS
 
 
 def terran_plan(enemy_race: Race = None) -> BuildOrder:

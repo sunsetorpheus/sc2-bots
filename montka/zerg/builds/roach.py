@@ -7,8 +7,8 @@ from sharpy.plans.acts.zerg import *
 from sharpy.plans.require import *
 from sharpy.plans.tactics.zerg import *
 
-from sunsetorpheus.zerg.build import Build
-from sunsetorpheus.zerg.common import zerg_tactics
+from montka.zerg.build import Build
+from montka.zerg.common import zerg_tactics
 
 
 def _plan() -> BuildOrder:

@@ -1,5 +1,5 @@
 from ladder import run_ladder_game
-from sunsetorpheus.sunsetorpheus import run
+from montka.montka import run
 
 bot = run()
 

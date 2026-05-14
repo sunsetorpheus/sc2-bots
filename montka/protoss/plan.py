@@ -2,7 +2,7 @@ import random
 from sc2.data import Race
 from sharpy.plans import BuildOrder
 
-from sunsetorpheus.protoss.builds import BUILDS
+from montka.protoss.builds import BUILDS
 
 
 def protoss_plan(enemy_race: Race = None) -> BuildOrder:
