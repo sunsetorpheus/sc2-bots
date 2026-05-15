@@ -1,6 +1,6 @@
 from sharpy.plans import Step
 from sharpy.plans.acts import *
-from sharpy.plans.acts.protoss.restore_power import RestorePower
+from sharpy.plans.acts.protoss import *
 from sharpy.plans.require import *
 from sharpy.plans.tactics import *
 from sc2.ids.unit_typeid import UnitTypeId
