@@ -25,6 +25,15 @@ def add_definitions(definitions: BotDefinitions):
     definitions.add_bot(
         "montka", lambda params: Bot(CHOSEN_RACE, Montka()), None
     )
+    definitions.add_bot(
+        "montka-protoss", lambda params: Bot(Race.Protoss, Montka()), None
+    )
+    definitions.add_bot(
+        "montka-terran", lambda params: Bot(Race.Terran, Montka()), None
+    )
+    definitions.add_bot(
+        "montka-zerg", lambda params: Bot(Race.Zerg, Montka()), None
+    )
 
 def main():
     update_version_txt()

@@ -2,6 +2,7 @@ from sharpy.plans import Step, StepBuildGas
 from sharpy.plans.acts import *
 from sharpy.plans.acts.protoss import *
 from sharpy.plans.require import *
+from sharpy.plans.require import RequireCustom
 from sharpy.plans.tactics import *
 from sc2.ids.unit_typeid import UnitTypeId
 
@@ -37,15 +38,15 @@ def _expansion():
     # Always expand when current bases are 80%+ saturated.
     # 75 probes naturally caps useful expansion at ~4 bases.
     return [
-        Expand(2, skip_until=_bases_saturated),
-        Expand(3, skip_until=_bases_saturated),
-        Expand(4, skip_until=_bases_saturated),
-        Expand(5, skip_until=_bases_saturated),
-        Expand(6, skip_until=_bases_saturated),
-        Expand(7, skip_until=_bases_saturated),
-        Expand(8, skip_until=_bases_saturated),
-        Expand(9, skip_until=_bases_saturated),
-        Expand(10, skip_until=_bases_saturated),
+        Step(None, Expand(2), skip_until=_bases_saturated),
+        Step(None, Expand(3), skip_until=_bases_saturated),
+        Step(None, Expand(4), skip_until=_bases_saturated),
+        Step(None, Expand(5), skip_until=_bases_saturated),
+        Step(None, Expand(6), skip_until=_bases_saturated),
+        Step(None, Expand(7), skip_until=_bases_saturated),
+        Step(None, Expand(8), skip_until=_bases_saturated),
+        Step(None, Expand(9), skip_until=_bases_saturated),
+        Step(None, Expand(10), skip_until=_bases_saturated),
     ]
 
 
