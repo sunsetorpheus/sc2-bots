@@ -1,29 +1,41 @@
 import random
-from sc2.data import Race
-from sharpy.knowledges import KnowledgeBot
-from sharpy.plans import BuildOrder
+from typing import Optional
 
-# Race is fixed at import time so the same race is used across all bot instances in a game session.
+from ares import AresBot
+from sc2.data import Race
+
+
 CHOSEN_RACE = random.choice([Race.Terran, Race.Zerg, Race.Protoss])
 
-class Montka(KnowledgeBot):
-    def __init__(self):
-        super().__init__("Mon'tka")
-        self.race = CHOSEN_RACE
 
-    async def create_plan(self) -> BuildOrder:
-        # Delegate to the race-specific plan, passing enemy race for matchup-aware build selection.
-        if self.knowledge.my_race == Race.Terran:
-            from montka.terran.plan import terran_plan
-            return terran_plan(self.knowledge.enemy_race)
-        elif self.knowledge.my_race == Race.Zerg:
-            from montka.zerg.plan import zerg_plan
-            return zerg_plan(self.knowledge.enemy_race)
+class Montka(AresBot):
+    def __init__(self, game_step_override: Optional[int] = None):
+        super().__init__(game_step_override)
+        self._race_plan = None
+
+    async def on_start(self) -> None:
+        await super().on_start()
+
+        enemy_race = self.enemy_race
+
+        if self.race == Race.Protoss:
+            from montka.protoss.plan import ProtossPlan
+            self._race_plan = ProtossPlan(self, enemy_race)
+        elif self.race == Race.Terran:
+            from montka.terran.plan import TerranPlan
+            self._race_plan = TerranPlan(self, enemy_race)
         else:
-            from montka.protoss.plan import protoss_plan
-            return protoss_plan(self.knowledge.enemy_race)
+            from montka.zerg.plan import ZergPlan
+            self._race_plan = ZergPlan(self, enemy_race)
+
+        await self._race_plan.on_start()
+
+    async def on_step(self, iteration: int) -> None:
+        await super().on_step(iteration)
+        if self._race_plan:
+            await self._race_plan.on_step(iteration)
+
 
 def run():
-    # Entry point for ladder: wraps Montka in a sc2 Bot player object.
     from sc2.player import Bot
     return Bot(CHOSEN_RACE, Montka())

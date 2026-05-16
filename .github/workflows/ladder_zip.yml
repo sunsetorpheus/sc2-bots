@@ -1,0 +1,52 @@
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pip build tools
+        run: pip install -U pip setuptools wheel cython
+
+      - name: Clone dependencies
+        run: |
+          git clone https://github.com/august-k/python-sc2 python-sc2
+          git clone https://github.com/raspersc2/SC2MapAnalysis SC2MapAnalysis
+          git clone https://github.com/AresSC2/cython-extensions-sc2 cython-extensions-sc2
+          git clone https://github.com/AresSC2/ares-sc2 ares-sc2
+
+      - name: Build cython-extensions-sc2
+        run: |
+          cd cython-extensions-sc2
+          pip install -e .
+          cd ..
+
+      - name: Install ares-sc2 dependencies
+        run: |
+          pip install burnysc2 loguru PyYAML portpicker mpyq s2clientprotocol aiohttp requests lark scipy numpy scikit-learn
+
+      - name: Package bot zip
+        run: python package_bot.py --ci
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Montka
+          path: publish/Montka.zip
+
+      - name: Upload to AI Arena
+        if: env.AIARENA_API_TOKEN != '' && env.AIARENA_BOT_ID != ''
+        env:
+          AIARENA_API_TOKEN: ${{ secrets.AIARENA_API_TOKEN }}
+          AIARENA_BOT_ID: ${{ secrets.AIARENA_BOT_ID }}
+        run: python scripts/upload_to_aiarena.py

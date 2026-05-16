@@ -19,8 +19,6 @@ def main():
     args, _ = parser.parse_known_args()
 
     if args.GamePort:
-        # Running on ladder — connect to external SC2 instance.
-        # Build portconfig from StartPort (ladder convention: server=[s+2,s+3], client=[s+4,s+5])
         start = args.StartPort
         portconfig = Portconfig(
             server_ports=[start + 2, start + 3],
@@ -36,7 +34,6 @@ def main():
             )
         )
     else:
-        # Fallback: local run vs built-in AI.
         run_game(
             maps.get("AcropolisLE"),
             [Bot(CHOSEN_RACE, Montka()), Computer(Race.Random, Difficulty.VeryHard)],

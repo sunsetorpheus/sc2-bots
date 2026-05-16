@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(cd \"c:\\\\Users\\\\moham\\\\Desktop\\\\Projects\\\\SC2\\\\sc2-bot-montka\"; foreach \\($pyver in @\\(\"310\",\"311\",\"312\",\"313\"\\)\\) { $result = venv\\\\Scripts\\\\pip.exe download cython-extensions-sc2==0.16.0 --platform manylinux2014_x86_64 --python-version $pyver --only-binary=:all: --no-deps -d publish\\\\linux_wheels 2>&1 | Select-String \"Saved|No matching\"; Write-Host \"py$pyver`: $result\" })",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:aiarena.net)",
+      "WebSearch",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "PowerShell(New-Item -ItemType Directory -Force \"c:\\\\Users\\\\moham\\\\Desktop\\\\Projects\\\\SC2\\\\sc2-bot-montka\\\\.github\\\\workflows\")",
+      "PowerShell(New-Item -ItemType Directory -Force \"c:\\\\Users\\\\moham\\\\Desktop\\\\Projects\\\\SC2\\\\sc2-bot-montka\\\\scripts\")",
+      "PowerShell(wsl --list --verbose 2>&1)",
+      "Bash(dir c:/Users/moham/Desktop/Projects/SC2/sc2-bot-montka/)",
+      "Bash(git rm *)"
+    ]
+  }
+}

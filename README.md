@@ -1,42 +1,44 @@
-# SC2 Bot — Sharpy Starter
+# Montka — SC2 Bot
 
-A StarCraft II bot built on [sharpy-sc2](https://github.com/DrInfy/sharpy-sc2/wiki) and [python-sc2](https://github.com/BurnySc2/python-sc2).
+A multi-race StarCraft II bot built on [ares-sc2](https://github.com/AresSC2/ares-sc2) and [python-sc2 (burnysc2)](https://github.com/BurnySc2/python-sc2).
+
+The bot randomly selects a race each game for unpredictability.
 
 ---
 
 ## Getting started
 
-The steps below will get you set up locally with your own bot name.
-
 ### 1. Prerequisites
 
-- [Python 3.11.9](https://www.python.org/downloads/release/python-3119/)
+- [Python 3.11](https://www.python.org/downloads/)
 - StarCraft II installed locally (for testing)
 - Git
 
 ### 2. Clone the repo
 
 ```
-git clone --recursive https://github.com/sunsetorpheus/sc2-bot-montka.git <BotName>
+git clone https://github.com/sunsetorpheus/sc2-bot-montka.git <BotName>
 cd <BotName>
 ```
 
-
-### 3. Rename the bot (do this before anything else)
-
-See the [Rename the bot](#rename-the-bot) section below. Do this now before you start coding so all your commits use your own bot name.
-
-### 4. Create and activate a virtual environment
+### 3. Create and activate a virtual environment
 
 ```
 python -m venv venv
 venv\Scripts\activate
 ```
 
-### 5. Install dependencies
+### 4. Install dependencies
 
 ```
-pip install -r requirements.txt
+pip install -e "git+https://github.com/AresSC2/ares-sc2.git#egg=ares-sc2"
+```
+
+Then fix the `.pth` file so the `sc2_helper` extension is found. Edit `venv\Lib\site-packages\ares_sc2.pth` to contain both lines:
+
+```
+<absolute-path-to-venv>/src/ares-sc2/src
+<absolute-path-to-venv>/src/ares-sc2
 ```
 
 ---
@@ -44,131 +46,133 @@ pip install -r requirements.txt
 ## Run the bot locally (vs built-in AI)
 
 ```
-python run_custom.py -m EverDreamLE -p1 BotName -p2 ai
+python run_custom.py
 ```
 
-Replace `BotName` with whatever name you registered in `run_custom.py`, and the map name with any SC2 ladder map.
+Launches a game on AcropolisLE vs Medium AI. Edit `run_custom.py` to change the map or difficulty.
 
-Replays and logs will be saved to the `games/` folder.
+Replays are saved to `games/` automatically by SC2.
 
 ---
 
 ## Rename the bot
 
-To rename the bot to your own name, make the following changes:
-
 ### 1. Rename the bot folder
 
-Rename the `montka/` folder to your bot name (lowercase, no spaces), e.g. `BotName/`.
+Rename `montka/` to your bot name (lowercase, no spaces), e.g. `mybot/`.
 
-### 2. Update the bot class (`montka/montka.py` → `BotName/BotName.py`)
+### 2. Update the main class (`montka/montka.py`)
 
-Rename the file itself to `BotName.py`, then update the class name, display name, and internal imports:
+Rename the file to `mybot.py` and update the class name and imports:
 
 ```python
-class BotName(KnowledgeBot):
-    def __init__(self):
-        super().__init__("BotName")  # This is the in-game display name
-
-    async def create_plan(self) -> BuildOrder:
-        if self.knowledge.my_race == Race.Terran:
-            from BotName.terran.plan import terran_plan
-            return terran_plan(self.knowledge.enemy_race)
-        elif self.knowledge.my_race == Race.Zerg:
-            from BotName.zerg.plan import zerg_plan
-            return zerg_plan(self.knowledge.enemy_race)
-        else:
-            from BotName.protoss.plan import protoss_plan
-            return protoss_plan(self.knowledge.enemy_race)
-
-def run():
-    from sc2.player import Bot
-    return Bot(CHOSEN_RACE, BotName())
+class MyBot(AresBot):
+    ...
 ```
 
-### 3. Update `BotName/run.py`
+### 3. Update `montka/run.py`
 
 ```python
 # Change
 from montka.montka import run
-
 # To
-from BotName.BotName import run
+from mybot.mybot import run
 ```
 
 ### 4. Update `run_custom.py`
 
 ```python
 # Change
-from montka.montka import Montka, CHOSEN_RACE
-
+from montka.montka import CHOSEN_RACE, Montka
 # To
-from BotName.BotName import BotName, CHOSEN_RACE
-```
-
-And update the bot registration:
-
-```python
-# Change
-definitions.add_bot("montka", lambda params: Bot(CHOSEN_RACE, Montka()), None)
-
-# To
-definitions.add_bot("BotName", lambda params: Bot(CHOSEN_RACE, BotName()), None)
-```
-
-### 5. Update `ladder_zip.py`
-
-Find the `montka_zip` entry and update the name, folder, and run.py path:
-
-```python
-BotName_zip = LadderZip(
-    "BotName", "Random", [("BotName", None), (os.path.join("BotName", "run.py"), "run.py")], common
-)
-```
-
-And update the `zip_types` dict:
-
-```python
-zip_types = {
-    ...
-    "BotName": BotName_zip,
-    ...
-}
+from mybot.mybot import CHOSEN_RACE, MyBot
 ```
 
 ---
 
-## Publish for ladder
+## Add a new build
 
-Package the bot into a ladder-ready zip:
+1. Create a file in `montka/{race}/builds/yourname.py` — define a `_config()` function returning a dict and a `Build(...)` instance
+2. Register it in `montka/{race}/builds/__init__.py`
+3. The plan picks it automatically using weighted-random matchup-aware selection
 
-```
-python ladder_zip.py -n BotName
-```
+---
 
-The zip will be placed in the `publish/` folder. Upload it to [AI Arena](https://aiarena.net) or your ladder of choice.
+## Publish to AI Arena
+
+Publishing is handled automatically by GitHub Actions on every push to `master`.
+
+### Setup (one time)
+
+1. Push the repo to GitHub
+2. Go to **Settings → Secrets and variables → Actions** and add:
+   - `AIARENA_API_TOKEN` — from [aiarena.net/profile/token](https://aiarena.net/profile/token)
+   - `AIARENA_BOT_ID` — the numeric ID shown on your bot's page on aiarena.net
+3. Create your bot on aiarena.net (**My Bots → Create Bot**, Type = Python, Plays = Random)
+
+### How it works
+
+Every push to `master` triggers `.github/workflows/ladder_zip.yml` which:
+1. Runs on `ubuntu-latest` (same OS as AI Arena servers)
+2. Clones `python-sc2`, `SC2MapAnalysis`, `cython-extensions-sc2`, and `ares-sc2`
+3. Compiles `cython_extensions` natively for Linux
+4. Packages everything into `publish/Montka.zip`
+5. Uploads the zip to AI Arena via API
+
+The build artifact is also available for download under **Actions → latest run**.
+
+### Manual upload
+
+If you want to upload manually without GitHub Actions:
+- Download the zip from the Actions artifact
+- Upload it on aiarena.net under **My Bots → your bot → Upload new zip**
+
+> **Do not** use `python package_bot.py` to generate a zip for upload — it runs on Windows and produces Linux-incompatible binaries. Only the GitHub Actions build (Ubuntu) produces a working zip.
 
 ---
 
 ## Project structure
 
 ```
-montka/              # Bot code (rename this to your bot name)
-  montka.py          # Main bot class
-  run.py             # Ladder entry point
-  protoss/           # Protoss builds and tactics
-  terran/            # Terran builds and tactics
-  zerg/              # Zerg builds and tactics
-sharpy-sc2/          # Framework (git submodule, do not edit)
-run_custom.py        # Local testing entry point
-ladder_zip.py        # Packaging script for ladder submission
-config.ini           # Bot settings (ladder)
-config-local.ini     # Bot settings (local testing, debug enabled)
-requirements.txt     # Python dependencies
+montka/                  # Bot code (rename this to your bot name)
+  montka.py              # Main bot class (AresBot, random race)
+  run.py                 # Ladder entry point (AI Arena / sc2ai compatible)
+  protoss/
+    plan.py              # ProtossPlan — registers ares behaviors each step
+    common.py            # Shared constants (army comps, upgrade lists)
+    build.py             # Build dataclass
+    builds/
+      __init__.py        # BUILDS list
+      stalker.py         # Mass Stalker build config
+  terran/
+    plan.py              # TerranPlan
+    common.py
+    build.py
+    builds/
+      __init__.py
+      bio.py             # Bio aggression build config
+  zerg/
+    plan.py              # ZergPlan
+    common.py
+    build.py
+    builds/
+      __init__.py
+      roach.py           # Roach/Ravager build config
+run.py                   # Ladder entry point (root, called by AI Arena)
+run_custom.py            # Local testing entry point (vs built-in AI)
+config.yml               # ares-sc2 settings
+requirements.txt         # Python dependencies
+package_bot.py           # Local packaging script (structure check only)
+scripts/
+  upload_to_aiarena.py   # Used by GitHub Actions to upload the zip
+.github/workflows/
+  ladder_zip.yml         # CI: build zip on Ubuntu and upload to AI Arena
 ```
 
 ---
 
 ## Documentation
 
-- [Sharpy-sc2 wiki](https://github.com/DrInfy/sharpy-sc2/wiki)
+- [ares-sc2 docs](https://aressc2.github.io/ares-sc2/index.html)
+- [python-sc2 (burnysc2)](https://github.com/BurnySc2/python-sc2)
+- [AI Arena](https://aiarena.net)
