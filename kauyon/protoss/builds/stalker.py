@@ -12,9 +12,12 @@ ARMY_COMP = {
 }
 
 # Warp Gate first so gates convert before the army scales.
+# Blink early — pairs with the StalkerMicro Blink-retreat behavior so low-HP
+# Stalkers can disengage. Needs Twilight Council (in UPGRADE_STRUCTURES).
 # Weapons before armor — Stalker DPS gain is higher than EHP gain at equal levels.
 UPGRADES = [
     UpgradeId.WARPGATERESEARCH,
+    UpgradeId.BLINKTECH,
     UpgradeId.PROTOSSGROUNDWEAPONSLEVEL1,
     UpgradeId.PROTOSSGROUNDWEAPONSLEVEL2,
     UpgradeId.PROTOSSGROUNDWEAPONSLEVEL3,
@@ -23,9 +26,10 @@ UPGRADES = [
     UpgradeId.PROTOSSGROUNDARMORSLEVEL3,
 ]
 
-# Forge needed for ground weapons/armor upgrades.
-# Built only after 3rd base is committed (see plan._add_structures).
-UPGRADE_STRUCTURES = [UnitTypeId.FORGE]
+# Forge unlocks ground weapons/armor L1.
+# Twilight Council unlocks L2/L3 of both (and Blink, if added later).
+# Both gated to "3rd Nexus ready" by plan._add_structures.
+UPGRADE_STRUCTURES = [UnitTypeId.FORGE, UnitTypeId.TWILIGHTCOUNCIL]
 
 
 def _config() -> dict:

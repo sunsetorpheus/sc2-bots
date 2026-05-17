@@ -356,7 +356,6 @@ class ProtossPlan:
                 )
                 if len(base_threats) >= 5:
                     self._attacking = False
-                    self._defender_tags.clear()
                     for unit in army:
                         unit.move(home)
                 else:
