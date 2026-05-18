@@ -2,6 +2,8 @@ from dataclasses import dataclass, field
 from typing import Callable, Any
 from sc2.data import Race
 
+from kauyon.protoss.builds.stalker import stalker_build
+
 
 @dataclass
 class Build:
@@ -12,4 +14,6 @@ class Build:
     tags: list = field(default_factory=list)
 
 
-BUILDS = []
+BUILDS = [
+    Build(name="stalker", fn=stalker_build),
+]
