@@ -4,13 +4,11 @@ Two Protoss StarCraft II ladder bots built on [ares-sc2](https://github.com/Ares
 
 ## The bots
 
-### Montka — fast and aggressive
+### Mont'ka — fast and aggressive
 Tight tech path, low base count, hits the opponent before they finish setting up. Built around an early attack wave and tempo. If the first push doesn't break, things get spicy.
 
-### Kauyon — slow and macro-heavy
+### Kau'yon — slow and macro-heavy
 Plays the long game. Expands hard, builds a deeper economy, takes the full upgrade ladder, and only commits to a fight once the army is well past critical mass. Patient and grindy.
-
-Both are Protoss-only — leaning on Stalker / Gateway play. The Terran and Zerg scaffolding is still in the repo (commented out) in case they get reactivated later.
 
 ---
 
@@ -27,6 +25,13 @@ Edit `run_custom.py` to pick map, difficulty, and which bot to run.
 
 ---
 
-## Ladder
+## Packaging
 
-Each bot ships as its own zip to [AI Arena](https://aiarena.net). `package_bot.py` builds either one — flip the `BOT` constant at the top. GitHub Actions builds the Linux zip on every push to `master`; download from the Actions artifact and upload manually on aiarena.net.
+`package_bot.py` builds either bot into an AI Arena compatible zip:
+
+```
+python package_bot.py --bot kauyon
+python package_bot.py --bot montka
+```
+
+Output: `publish/Kauyon.zip` or `publish/Montka.zip`.
