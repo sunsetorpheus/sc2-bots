@@ -2,7 +2,7 @@ from sc2.ids.ability_id import AbilityId
 from sc2.ids.buff_id import BuffId
 from sc2.ids.unit_typeid import UnitTypeId
 
-from ares.behaviors.macro import AutoSupply, BuildStructure, BuildWorkers, ExpansionController, GasBuildingController, MacroPlan, Mining
+from ares.behaviors.macro import AutoSupply, BuildStructure, BuildWorkers, GasBuildingController, MacroPlan, Mining
 
 from kauyon.protoss.common import (
     CHRONO_ENERGY_THRESHOLD,
@@ -15,15 +15,45 @@ from kauyon.protoss.common import (
 )
 
 
+class _ReserveForPendingNexus:
+    """MacroPlan behavior that halts spending while a Nexus build is in-flight.
+
+    Fixes a race in ares: ExpansionController (and our custom dispatch) dispatch
+    a worker to walk to the expansion location, but minerals are only deducted
+    when `worker.build()` fires at the target. During the walk, other MacroPlan
+    behaviors (gates, probes, pylons) happily spend down the bank below 400, so
+    when the worker arrives it sits idle until the 120s timeout cancels the
+    build. By returning True (halting the MacroPlan waterfall) whenever a
+    Nexus worker is en route AND we don't yet have 400 minerals, we starve the
+    other behaviors so the bank only grows until the build fires.
+    """
+
+    def execute(self, ai, config, mediator) -> bool:
+        nexus_type = ai.base_townhall_type
+        tracker = mediator.get_building_tracker_dict
+        if not any(info.get("id") == nexus_type for info in tracker.values()):
+            return False
+        if ai.minerals >= 400:
+            return False
+        return True
+
+
 class Macro:
     def __init__(self, ai, config: dict):
         self.ai = ai
         self.config = config
+        # Saturation latches: once a base crosses expand_at, it stays counted so
+        # assigned_harvesters jitter at the boundary can't flap `desired`.
+        self._saturated_tags: set[int] = set()
 
     def add_behaviors(self, macro: MacroPlan) -> None:
         # Add all mineral-spending macro behaviors to the shared MacroPlan in
         # priority order. Called by plan.py before registering the plan.
-        # Expansion is first so it can save for a Nexus before gates or units drain the bank.
+        # The reservation behavior is added first: it halts the waterfall (returns
+        # True) whenever a Nexus worker is en route and we're under 400 minerals,
+        # preventing gates/probes/etc. from spending the bank below the Nexus cost
+        # before the build worker can fire its `worker.build()` call.
+        macro.add(_ReserveForPendingNexus())
         self._expansion(macro)
         self._opener(macro)
         self._gateways(macro)
@@ -53,13 +83,77 @@ class Macro:
             key=lambda th: th.distance_to(home),
         )
 
-        # Each saturated expansion triggers the next base.
+        # Each saturated expansion triggers the next base. Saturation latches —
+        # once a base crosses expand_at it stays counted, so assigned_harvesters
+        # jitter at the boundary can't flap `desired` up and down.
         for th in expansions:
+            if th.tag in self._saturated_tags:
+                desired += 1
+                continue
             if th.assigned_harvesters >= expand_at:
                 desired += 1
+                self._saturated_tags.add(th.tag)
 
         desired = min(desired, expand_max)
-        macro.add(ExpansionController(to_count=desired, max_pending=1))
+
+        self._dispatch_expansion(desired)
+
+    def _dispatch_expansion(self, desired: int) -> None:
+        # Custom expansion dispatch — replaces ares's ExpansionController to fix
+        # a race: ExpansionController dispatches a far-away worker the moment
+        # minerals first hit 400, but doesn't actually deduct minerals until the
+        # worker arrives. The reservation behavior above complements this by
+        # freezing other spending while the worker walks. Here we add force_close
+        # worker selection (shorter walk) and a small mineral buffer to absorb
+        # any frame-scale spending dips before the reservation kicks in.
+        ai = self.ai
+        nexus_type = ai.base_townhall_type
+        ready = ai.townhalls.ready.amount
+        pending = ai.structure_pending(nexus_type)
+
+        # Already have / building enough, or one is already on the way.
+        if ready + pending >= desired or pending >= 1:
+            return
+
+        # Mineral buffer over the 400 cost. Absorbs the typical few-frame delta
+        # between dispatch and worker.build() firing.
+        if ai.minerals < 450:
+            return
+
+        # Find the next safe expansion location via the mediator. Expansions
+        # come ranked by pathing distance from main. We must explicitly skip
+        # locations where we already have a townhall — `location_is_blocked`
+        # with default args doesn't consider own townhalls as blockers, so
+        # without this filter the loop would re-pick our natural every frame.
+        location = None
+        own_th_positions = {
+            (round(th.position.x, 1), round(th.position.y, 1))
+            for th in ai.townhalls
+        }
+        for el in ai.mediator.get_own_expansions:
+            candidate = el[0]
+            cand_key = (round(candidate.x, 1), round(candidate.y, 1))
+            if cand_key in own_th_positions:
+                continue
+            if ai.location_is_blocked(ai.mediator, candidate):
+                continue
+            location = candidate
+            break
+
+        if location is None:
+            return
+
+        # force_close=True is the key fix — pick a worker near the target so the
+        # walk window is short and minerals can't drain below 400 mid-walk.
+        worker = ai.mediator.select_worker(target_position=location, force_close=True)
+        if worker is None:
+            return
+
+        ai.mediator.build_with_specific_worker(
+            worker=worker,
+            structure_type=nexus_type,
+            pos=location,
+        )
 
     def _opener(self, macro: MacroPlan) -> None:
         # Walk the opener sequence and queue the first structure that doesn't exist yet.
