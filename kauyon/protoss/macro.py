@@ -29,13 +29,15 @@ class _ReserveForPendingNexus:
     """
 
     def execute(self, ai, config, mediator) -> bool:
-        nexus_type = ai.base_townhall_type
-        tracker = mediator.get_building_tracker_dict
-        if not any(info.get("id") == nexus_type for info in tracker.values()):
-            return False
+        # Cheap arithmetic check first — most frames either have enough
+        # minerals or are nowhere near 400, so we never scan the tracker.
         if ai.minerals >= 400:
             return False
-        return True
+        nexus_type = ai.base_townhall_type
+        return any(
+            info.get("id") == nexus_type
+            for info in mediator.get_building_tracker_dict.values()
+        )
 
 
 class Macro:
@@ -45,6 +47,9 @@ class Macro:
         # Saturation latches: once a base crosses expand_at, it stays counted so
         # assigned_harvesters jitter at the boundary can't flap `desired`.
         self._saturated_tags: set[int] = set()
+        # Reused across frames — the behavior is stateless, no need to allocate
+        # a new instance every macro plan rebuild.
+        self._reserve_nexus = _ReserveForPendingNexus()
 
     def add_behaviors(self, macro: MacroPlan) -> None:
         # Add all mineral-spending macro behaviors to the shared MacroPlan in
@@ -53,7 +58,7 @@ class Macro:
         # True) whenever a Nexus worker is en route and we're under 400 minerals,
         # preventing gates/probes/etc. from spending the bank below the Nexus cost
         # before the build worker can fire its `worker.build()` call.
-        macro.add(_ReserveForPendingNexus())
+        macro.add(self._reserve_nexus)
         self._expansion(macro)
         self._opener(macro)
         self._gateways(macro)
@@ -74,27 +79,23 @@ class Macro:
         # Always want at least 2 bases (main + natural).
         desired = 2
 
-        # Only check expansions (not main) against the threshold — main is always
-        # saturated once the natural is up, so including it would double-trigger.
-        # Sort by distance from start so we evaluate bases in expansion order.
+        # Count saturated expansions (anything 10+ away from main). Order does
+        # not matter — we only need a count. Saturation latches: once a base
+        # crosses expand_at it stays counted, so assigned_harvesters jitter at
+        # the boundary can't flap `desired` up and down.
         home = self.ai.start_location
-        expansions = sorted(
-            [th for th in self.ai.townhalls.ready if th.distance_to(home) >= 10],
-            key=lambda th: th.distance_to(home),
-        )
-
-        # Each saturated expansion triggers the next base. Saturation latches —
-        # once a base crosses expand_at it stays counted, so assigned_harvesters
-        # jitter at the boundary can't flap `desired` up and down.
-        for th in expansions:
-            if th.tag in self._saturated_tags:
-                desired += 1
+        saturated = self._saturated_tags
+        for th in self.ai.townhalls.ready:
+            if th.distance_to(home) < 10:
                 continue
-            if th.assigned_harvesters >= expand_at:
+            if th.tag in saturated:
                 desired += 1
-                self._saturated_tags.add(th.tag)
+            elif th.assigned_harvesters >= expand_at:
+                desired += 1
+                saturated.add(th.tag)
 
-        desired = min(desired, expand_max)
+        if desired > expand_max:
+            desired = expand_max
 
         self._dispatch_expansion(desired)
 
@@ -107,17 +108,13 @@ class Macro:
         # worker selection (shorter walk) and a small mineral buffer to absorb
         # any frame-scale spending dips before the reservation kicks in.
         ai = self.ai
-        nexus_type = ai.base_townhall_type
-        ready = ai.townhalls.ready.amount
-        pending = ai.structure_pending(nexus_type)
 
-        # Already have / building enough, or one is already on the way.
-        if ready + pending >= desired or pending >= 1:
-            return
-
-        # Mineral buffer over the 400 cost. Absorbs the typical few-frame delta
-        # between dispatch and worker.build() firing.
+        # Cheap arithmetic checks first — most frames exit here.
         if ai.minerals < 450:
+            return
+        nexus_type = ai.base_townhall_type
+        pending = ai.structure_pending(nexus_type)
+        if pending >= 1 or ai.townhalls.ready.amount + pending >= desired:
             return
 
         # Find the next safe expansion location via the mediator. Expansions
@@ -125,17 +122,22 @@ class Macro:
         # locations where we already have a townhall — `location_is_blocked`
         # with default args doesn't consider own townhalls as blockers, so
         # without this filter the loop would re-pick our natural every frame.
+        # The set of own townhall positions is built lazily on first miss so we
+        # don't pay for it when the first candidate is already ours.
+        mediator = ai.mediator
+        own_th_positions: set[tuple[float, float]] | None = None
         location = None
-        own_th_positions = {
-            (round(th.position.x, 1), round(th.position.y, 1))
-            for th in ai.townhalls
-        }
-        for el in ai.mediator.get_own_expansions:
+        for el in mediator.get_own_expansions:
             candidate = el[0]
             cand_key = (round(candidate.x, 1), round(candidate.y, 1))
+            if own_th_positions is None:
+                own_th_positions = {
+                    (round(th.position.x, 1), round(th.position.y, 1))
+                    for th in ai.townhalls
+                }
             if cand_key in own_th_positions:
                 continue
-            if ai.location_is_blocked(ai.mediator, candidate):
+            if ai.location_is_blocked(mediator, candidate):
                 continue
             location = candidate
             break
@@ -145,11 +147,11 @@ class Macro:
 
         # force_close=True is the key fix — pick a worker near the target so the
         # walk window is short and minerals can't drain below 400 mid-walk.
-        worker = ai.mediator.select_worker(target_position=location, force_close=True)
+        worker = mediator.select_worker(target_position=location, force_close=True)
         if worker is None:
             return
 
-        ai.mediator.build_with_specific_worker(
+        mediator.build_with_specific_worker(
             worker=worker,
             structure_type=nexus_type,
             pos=location,
