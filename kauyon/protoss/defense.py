@@ -25,7 +25,7 @@ class Defense:
             self.ai.units.closer_than(radius, nexus)
             | self.ai.structures.closer_than(radius, nexus)
         )
-        return any(u.is_under_attack for u in nearby_friendly)
+        return any(u.shield_health_percentage < 1.0 for u in nearby_friendly)
 
     def _build_defenses(self, nexus: Unit) -> None:
         has_forge = bool(self.ai.structures(UnitTypeId.FORGE).ready)
