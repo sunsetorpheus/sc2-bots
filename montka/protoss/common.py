@@ -21,7 +21,7 @@ MAX_BATTERIES_PER_BASE = 1
 
 # Army supply threshold to trigger an attack push.
 # Mont'ka attacks early with a smaller army than Kau'yon.
-ATTACK_SUPPLY = 50
+ATTACK_SUPPLY = 100
 
 # Fraction of attack supply below which the army retreats home.
 # Higher than Kau'yon — Mont'ka commits harder and retreats less.

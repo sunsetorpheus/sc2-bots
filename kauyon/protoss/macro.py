@@ -348,14 +348,19 @@ class Macro:
         # Sort ready townhalls by distance from home: index 0 = main, index 1 = natural, etc.
         bases_sorted = sorted(self.ai.townhalls.ready, key=lambda th: th.distance_to(home))
 
+        expand_max = self.config.get("expand_max", EXPAND_MAX)
+        expand_at = self.config.get("expand_at_harvesters", EXPAND_AT_HARVESTERS)
+
         target = 0
-        base_rows = []
         for i, th in enumerate(bases_sorted):
             is_main = i == 0
             # A non-main base qualifies once the next base (index i+1) is committed.
             # committed_bases counts ready + pending, so base i qualifies when committed > i+1.
-            qualified = is_main or committed_bases > i + 1
-            base_rows.append((th.position, th.assigned_harvesters, qualified))
+            # Exception: if this is the last allowed base, qualify it once minerals saturate
+            # so a base-capped bot still gets gas on its final expansion.
+            is_last_base = (i + 1) == expand_max
+            natural_saturated = is_last_base and th.assigned_harvesters >= expand_at
+            qualified = is_main or committed_bases > i + 1 or natural_saturated
             if qualified:
                 target += 2
 

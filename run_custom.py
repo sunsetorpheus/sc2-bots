@@ -18,12 +18,12 @@ MODE = "bot_vs_ai"              # "bot_vs_ai" | "bot_vs_bot"
 
 # bot_vs_ai options
 BOT = "montka"                   # "montka" | "kauyon"
-BOT_RACE = Race.Protoss
-OPPONENT_RACE = Race.Random
-DIFFICULTY = Difficulty.CheatInsane
+BOT_RACE = Race.Protoss          # Race.Protoss | Race.Terran | Race.Zerg | Race.Random
+OPPONENT_RACE = Race.Random      # Race.Protoss | Race.Terran | Race.Zerg | Race.Random
+DIFFICULTY = Difficulty.Hard  # VeryEasy | Easy | Medium | MediumHard | Hard | Harder | VeryHard | CheatVision | CheatMoney | CheatInsane
 
-MAP = "PylonAIE_v4"
-REALTIME = False
+MAP = "PylonAIE_v4"             # installed maps: PylonAIE_v4
+REALTIME = False                 # False = fastest speed | True = normal game speed
 # ---------------
 
 

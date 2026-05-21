@@ -335,10 +335,18 @@ class Macro:
 
         bases_sorted = sorted(self.ai.townhalls.ready, key=lambda th: th.distance_to(home))
 
+        expand_max = self.config.get("expand_max", EXPAND_MAX)
+        expand_at = self.config.get("expand_at_harvesters", EXPAND_AT_HARVESTERS)
+
         target = 0
         for i, th in enumerate(bases_sorted):
             is_main = i == 0
-            qualified = is_main or committed_bases > i + 1
+            # A non-main base qualifies for gas if a further base has been committed
+            # (normal case), OR if it's the last allowed base and minerals are saturated
+            # (so a capped bot like Mont'ka still gets gas on its natural).
+            is_last_base = (i + 1) == expand_max
+            natural_saturated = is_last_base and th.assigned_harvesters >= expand_at
+            qualified = is_main or committed_bases > i + 1 or natural_saturated
             if qualified:
                 target += 2
 
