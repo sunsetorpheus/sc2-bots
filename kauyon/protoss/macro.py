@@ -79,19 +79,30 @@ class Macro:
         # Base desire is current committed base count — never shrink below what we have.
         # Each saturated non-main base adds 1 to signal readiness for the next expansion.
         nexus_type = self.ai.base_townhall_type
-        desired = self.ai.townhalls.ready.amount + self.ai.structure_pending(nexus_type)
+        ready_count = self.ai.townhalls.ready.amount
+        pending_count = self.ai.structure_pending(nexus_type)
+        desired = ready_count + pending_count
 
         home = self.ai.start_location
         saturated = self._saturated_tags
+
+        # A single +1 signals "expand to the next base" — we never want more than
+        # one step ahead. Stacking +1 per saturated base was causing desired to
+        # jump multiple steps at once (e.g. 3→5 when two bases were already latched).
+        any_saturated = False
         for th in self.ai.townhalls.ready:
             # Skip main — it's always saturated relative to expansions.
             if th.distance_to(home) < 10:
                 continue
+
             if th.tag in saturated:
-                desired += 1
+                any_saturated = True
             elif th.assigned_harvesters >= expand_at:
-                desired += 1
                 saturated.add(th.tag)
+                any_saturated = True
+
+        if any_saturated:
+            desired += 1
 
         if desired > expand_max:
             desired = expand_max
@@ -113,7 +124,10 @@ class Macro:
             return
         nexus_type = ai.base_townhall_type
         pending = ai.structure_pending(nexus_type)
-        if pending >= 1 or ai.townhalls.ready.amount + pending >= desired:
+        ready = ai.townhalls.ready.amount
+        committed = ready + pending
+
+        if pending >= 1 or committed >= desired:
             return
 
         # Find the next safe expansion location via the mediator. Expansions
