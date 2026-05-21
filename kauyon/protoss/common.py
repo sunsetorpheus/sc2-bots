@@ -51,7 +51,7 @@ GATEWAY_MAX = 12
 # Minimum Nexus energy before firing Chrono Boost.
 # Holding to 75 avoids wasting energy on a nearly-finished job.
 # Build files can override "chrono_energy_threshold" in config.
-CHRONO_ENERGY_THRESHOLD = 75
+CHRONO_ENERGY_THRESHOLD = 50
 
 # Default opener sequence: the structures to build at the start of the game, in order.
 # Each entry is a (UnitTypeId, count) tuple — the opener waits until that many of the

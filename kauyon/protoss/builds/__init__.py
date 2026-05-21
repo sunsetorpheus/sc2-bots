@@ -15,5 +15,5 @@ class Build:
 
 
 BUILDS = [
-    Build(name="mass_stalker", fn=mass_stalker_build, weight=0, good_against=[Race.Terran]),
+    Build(name="mass_stalker", fn=mass_stalker_build, weight=1, good_against=[]),
 ]
