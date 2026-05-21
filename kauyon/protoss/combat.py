@@ -80,12 +80,14 @@ class Combat:
                 self._attack(army, enemy)
 
     def _attack(self, army: Units, enemy: Point2) -> None:
-        # Attack-move toward the nearest visible threat — units handle individual
-        # targeting themselves, which allows natural kiting and focus fire.
-        if self.ai.enemy_units or self.ai.enemy_structures:
+        # Attack-move toward the nearest attackable threat — filter out units the
+        # army can detect but not attack (e.g. cloaked Observers). Without this,
+        # the army chases unattackable units indefinitely.
+        attackable_enemies = self.ai.enemy_units.filter(lambda u: u.can_be_attacked)
+        if attackable_enemies or self.ai.enemy_structures:
             target = (
-                self.ai.enemy_units.closest_to(army.center)
-                if self.ai.enemy_units
+                attackable_enemies.closest_to(army.center)
+                if attackable_enemies
                 else self.ai.enemy_structures.closest_to(army.center)
             )
             for unit in army:
