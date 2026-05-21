@@ -89,10 +89,20 @@ from sc2.ids.upgrade_id import UpgradeId
 #   Example use: add Blink for a Stalker build (requires Twilight Council).
 #
 # "army_comp" (dict)
-#   Unit composition for SpawnController. Each entry maps a UnitTypeId to a dict
-#   with "proportion" (relative share of the army) and "priority" (lower = built first).
+#   Unit composition controlling all unit production. Two modes per unit type:
+#
+#   Proportion mode — relative share of the army, handled by SpawnController.
+#     UnitTypeId.STALKER: {"proportion": 1.0, "priority": 2}
+#     All proportion values must sum to 1.0.
+#
+#   Fixed-count mode — always maintain exactly this many, built first before proportions.
+#     UnitTypeId.OBSERVER: {"count": 1, "priority": 0}
+#     UnitTypeId.SENTRY:   {"count": 2, "priority": 1}
+#     Handled by _spawn_fixed_count in production.py — excluded from SpawnController.
+#
+#   Both modes respect "priority" (lower = built first). Fixed-count units always
+#   run before proportion units regardless of priority value.
 #   Required for unit production — if not set, gates sit idle.
-#   Example: pure Stalker army below.
 #
 # (More keys will be documented here as steps are implemented.)
 
