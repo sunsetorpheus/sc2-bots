@@ -2,8 +2,7 @@ from dataclasses import dataclass, field
 from typing import Callable, Any
 from sc2.data import Race
 
-from kauyon.protoss.builds.macro import macro_build
-from kauyon.protoss.builds.stalker import stalker_build
+from kauyon.protoss.builds.mass_stalker import mass_stalker_build
 
 
 @dataclass
@@ -16,8 +15,5 @@ class Build:
 
 
 BUILDS = [
-    # Default macro build — eligible against all races, picked most often.
-    Build(name="macro", fn=macro_build, weight=1),
-    # Stalker-focused build — only considered vs Terran, picked less often.
-    Build(name="stalker", fn=stalker_build, weight=0, good_against=[Race.Terran]),
+    Build(name="mass_stalker", fn=mass_stalker_build, weight=0, good_against=[Race.Terran]),
 ]

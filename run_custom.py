@@ -14,7 +14,7 @@ from montka.montka import Montka
 BOT = "kauyon"                   # "montka" | "kauyon"
 BOT_RACE = Race.Protoss          # Race.Protoss | Race.Terran | Race.Zerg | Race.Random
 OPPONENT_RACE = Race.Random      # Race.Protoss | Race.Terran | Race.Zerg | Race.Random
-DIFFICULTY = Difficulty.VeryHard   # Easy | Medium | MediumHard | Hard | Harder | VeryHard | CheatVision | CheatMoney | CheatInsane
+DIFFICULTY = Difficulty.CheatInsane   # Easy | Medium | MediumHard | Hard | Harder | VeryHard | CheatVision | CheatMoney | CheatInsane
 MAP = "PylonAIE_v4"                 # Any installed map name
 REALTIME = False                 # True = watch at normal speed in SC2 window
 # ---------------

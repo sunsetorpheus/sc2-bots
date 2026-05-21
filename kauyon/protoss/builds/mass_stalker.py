@@ -4,7 +4,7 @@ from sc2.ids.upgrade_id import UpgradeId
 from kauyon.protoss.common import BUILD_STEPS
 
 
-def macro_build() -> dict:
+def mass_stalker_build() -> dict:
     # Default macro build — all economy/timing values fall back to common.py defaults.
     # Add keys here only when you want to diverge from those defaults.
     #
