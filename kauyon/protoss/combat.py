@@ -94,16 +94,31 @@ class Combat:
                 unit.attack(target.position)
             return
 
-        # No visible enemies — scan expansion locations enemy-side first.
+        # No visible enemies — scan expansion locations enemy-side first, skipping
+        # locations the army has already visited and found empty. Once all locations
+        # are exhausted, fall back to the enemy start so the army doesn't idle.
         if self._scan_locations:
-            target = self._scan_locations[self._scan_index]
-            if army.center.distance_to(target) < _SCAN_ARRIVAL_DISTANCE:
-                self._scan_index = (self._scan_index + 1) % len(self._scan_locations)
+            checked = 0
+            while checked < len(self._scan_locations):
                 target = self._scan_locations[self._scan_index]
-            for unit in army:
-                unit.attack(target)
-            return
+                arrived = army.center.distance_to(target) < _SCAN_ARRIVAL_DISTANCE
+                # A location counts as cleared if the army is there and no enemy
+                # structures or units are visible within scan arrival distance.
+                enemies_nearby = (
+                    self.ai.enemy_units.closer_than(_SCAN_ARRIVAL_DISTANCE, target)
+                    or self.ai.enemy_structures.closer_than(_SCAN_ARRIVAL_DISTANCE, target)
+                )
+                if arrived and not enemies_nearby:
+                    # Location confirmed empty — advance and try the next one.
+                    self._scan_index = (self._scan_index + 1) % len(self._scan_locations)
+                    checked += 1
+                    continue
+                # Either not arrived yet or enemies are present — move here.
+                for unit in army:
+                    unit.attack(target)
+                return
 
+        # All scan locations exhausted with no enemies found — attack enemy start.
         for unit in army:
             unit.attack(enemy)
 
