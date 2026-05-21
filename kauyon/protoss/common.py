@@ -6,7 +6,7 @@ PROBE_MAX = 85
 
 # Harvester count on a base that triggers the next expansion.
 # Build files can override "expand_at_harvesters" in config.
-EXPAND_AT_HARVESTERS = 14
+EXPAND_AT_HARVESTERS = 16
 
 # Hard cap on total bases regardless of saturation.
 # Build files can override "expand_max" in config.
